@@ -1,23 +1,16 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from typing import List
 from .models import Task, TaskCreate
 from .repositories import InMemoryTaskRepository, ITaskRepository, SqlTaskRepository
 from .services import TaskService
-from .database import SessionLocal
+from .database import SessionLocal, engine
 from sqlalchemy.orm import Session
-from .database import engine
 from . import models_orm
 
-# สร้าง Table ใน Database
 models_orm.Base.metadata.create_all(bind=engine)
 
-# สร้างแอปพลิเคชันแค่ครั้งเดียวพอครับ
 app = FastAPI()
 
-# Singleton Repository สำหรับ In-Memory (ถ้าจะใช้)
-task_repo = InMemoryTaskRepository()
-
-# Dependency สำหรับเปิด-ปิด Database
 def get_db():
     db = SessionLocal()
     try:
@@ -25,12 +18,10 @@ def get_db():
     finally:
         db.close()
 
-# Dependency สำหรับเรียกใช้ Service
 def get_task_service(db: Session = Depends(get_db)):
     repo = SqlTaskRepository(db)
     return TaskService(repo)
 
-# --- Routes ---
 
 @app.get("/") 
 def read_root():
@@ -48,6 +39,5 @@ def create_task(task: TaskCreate, service: TaskService = Depends(get_task_servic
 def complete_task(task_id: int, service: TaskService = Depends(get_task_service)):
     updated_task = service.mark_as_complete(task_id)
     if not updated_task:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="ไม่พบ Task ที่ระบุ")
     return updated_task

@@ -20,6 +20,10 @@ class ITaskRepository(ABC):
     @abstractmethod
     def update(self, task_id: int, task_data: dict) -> Optional[Task]:
         pass
+    
+    @abstractmethod
+    def get_by_title(self, title: str) -> Optional[Task]:
+        pass
 
 class InMemoryTaskRepository(ITaskRepository):
     def __init__(self):
@@ -47,6 +51,12 @@ class InMemoryTaskRepository(ITaskRepository):
             for key, value in task_data.items():
                 setattr(task, key, value)
         return task
+    
+    def get_by_title(self, title: str) -> Optional[Task]:
+        for task in self.tasks:
+            if task.title == title:
+                return task
+        return None
 
 class SqlTaskRepository(ITaskRepository):
     def __init__(self, db: Session):
@@ -73,3 +83,6 @@ class SqlTaskRepository(ITaskRepository):
             self.db.commit()
             self.db.refresh(db_task)
         return db_task
+    
+    def get_by_title(self, title: str):
+        return self.db.query(models_orm.TaskORM).filter(models_orm.TaskORM.title == title).first()
