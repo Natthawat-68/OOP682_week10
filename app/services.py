@@ -9,6 +9,8 @@ class TaskService:
         return self.repo.get_all()
 
     def create_task(self, task_in: TaskCreate):
-        # Business logic could go here
         return self.repo.create(task_in)
+    
+    def mark_as_complete(self, task_id: int):
+        return self.repo.update(task_id, {"completed": True})
     

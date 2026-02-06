@@ -43,3 +43,11 @@ def read_tasks(service: TaskService = Depends(get_task_service)):
 @app.post("/tasks", response_model=Task)
 def create_task(task: TaskCreate, service: TaskService = Depends(get_task_service)):
     return service.create_task(task)
+
+@app.put("/tasks/{task_id}/complete", response_model=Task)
+def complete_task(task_id: int, service: TaskService = Depends(get_task_service)):
+    updated_task = service.mark_as_complete(task_id)
+    if not updated_task:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="ไม่พบ Task ที่ระบุ")
+    return updated_task
